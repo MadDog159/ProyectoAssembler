@@ -1,0 +1,220 @@
+.macro print_S (%x)
+	li $v0 4
+	la $a0 %x
+	syscall
+.end_macro
+.macro print_I (%y)
+	li $v0 1
+	move $a0 %y
+	syscall
+.end_macro
+
+.data
+Mensaje1:.asciiz "Bienvenido a la Calculadora de Programador\n"
+Mensaje2:.asciiz "Elija el sistema numerico que introducira: \n 1)Binario \n 2)Decimal Empaquetado\n 3)Base 10 \n 4)Octal \n 5)Hexadecimal\n"
+Mensaje3:.asciiz "\n El sistema de numeracion al cual convertir: \n 1)Binario \n 2)Decimal Empaquetado\n 3)Base 10 \n 4)Octal \n 5)Hexadecimal\n"
+Mensaje4:.asciiz "Numero en base 10 introducido: "
+SOS: .asciiz "Pase por aqui"
+
+num_Binario: .space 33
+#num_BinarioReves: .space 33
+num_BinarioA1: .space 33
+signo: .space 2
+
+.text
+li $s2 0 #primera posicion
+li $s0 2 #constante a multiplicar o dividir
+
+print_S(Mensaje1)
+
+menu:
+print_S(Mensaje2)
+
+# El usurio elijira entre :
+# 1) Binario
+# 2) Decimal empaquetada
+# 3) Base 10
+# 4) Octal
+# 5) Hexadecimal
+
+li $s7, -7
+li $v0, 5
+syscall
+
+beq $v0,1 Binario_a2
+#beq 2, $v0 Decimal
+#beq $v0 3 Base10
+#beq 4, $v0 Octal
+#beq 5, $v0 Hexadecimal
+blt $v0 1 menu
+bgt $v0 5 menu
+
+Binario_a2:#############################################################
+	li $v0 8
+	la $a0 num_Binario
+	li $a1 33
+	syscall
+	
+li $t1 0                # t1 contador
+lb $t2 num_Binario($t1) # t2 con el primer dato del binarioA2 ingresado
+beq $t2 0x30 recorrido2 # si  t2 es 0 entonces es Binario
+
+#while recorrido
+recorrido:
+	lb $t2 num_Binario($t1)   # t2 con el primer valor del numero introducido
+	beq $t2 0x00 primeraResta # cuando t2 sea caracter nulo 
+	beq $t2 0xA primeraResta  # cuando t2 sea caracter Enter
+	addi $t1 $t1 1            # aumento t1 en 1
+	b recorrido
+#fin while recorrido
+
+primeraResta:
+	addi $t1 $t1 -1           # resto 1 para regresar al ultimo valor del BinarioA2 
+	li $t9 0		   # t9 contador
+	add $t9 $t9 $t1           # Ultima posicion duplicada para realizar el contador al reves
+	
+# while Resta
+resta:  beq $t1 -1 Decimal      # vas a Decimal
+	lb $t2 num_Binario($t1) # t2 vale lo que esta en el vector(t1)
+	beq $t2 0x30 sumar      # t2 = 0 ir a sumar
+	beq $t2 0x31 restaFinal # t2 = 1 ir a restafinal
+
+sumar:	li $t2 0x31             # t2 ahora sera = 1
+	sb $t2 num_Binario($t1) # guardo en vector(t1) lo del t2
+	addi $t1 $t1 -1		 # reduzco las posiciones de t1
+	b resta  
+
+	
+restaFinal: li $t2 0x30            # t2 ahora sera = 0
+	sb $t2 num_Binario($t1)    # guardo en vector(t1) lo del t2
+	b Decimal	
+# fin de while Decimal	     
+
+# while Decimal
+Decimal:#print_S(SOS)
+	li $t3 1                 # t3 = 1
+	lb $t2 num_Binario($t9)  # t2 sera vector(t9)
+	li $t4 0x2D              # t4 es el signo (-)
+	sb $t4 signo($s2)        # guardo en vector(s2) lo del t4
+	beq $t2 0x30 Cero        # si t2 = 0 
+	beq $t2 0x31 Uno  	  # si t2 = 1
+
+Uno:	li $t0 0                 # t2 = 1 y t0 = 0
+	b Sumar_Decimal
+			
+Cero:	li $t0 1                 # t2 = 0 y t0 = 1
+	b Sumar_Decimal
+#fin while decimal
+
+#while Sumar_Decimal
+Sumar_Decimal:
+	mul $t3 $t3 $s0         # t3 = t3 * 2
+	addi $t9 $t9 -1         # contador t9 va en -1
+	lb $t2 num_Binario($t9) # t2 valdra vector(t9)
+	beq $t2 0x00 Resultado  # t2 = Null 
+	beq $t2 0x30 irSumando  # t2 = 0 
+	beq $t2 0x31 NoHacerlo  # t2 = 1
+	
+irSumando: add $t0 $t0 $t3     # t0 = ( 1 o 0) + t3 -> t0 = t0 + t3
+	b Sumar_Decimal
+
+NoHacerlo:b Sumar_Decimal
+#fin while decimal
+
+recorrido2:
+	lb $t2 num_Binario($t1)     # t2 con el primer valor del numero introducido
+	beq $t2 0x00 primeraResta2  # cuando t2 sea caracter nulo 
+	beq $t2 0xA primeraResta2   # cuando t2 sea caracter Enter
+	addi $t1 $t1 1		     # t1 contador +1
+	b recorrido2
+
+primeraResta2:
+	addi $t1 $t1 -1 	# contador en la ultima posicion del vector
+	li $t9 0        	# t9 = 0
+	add $t9 $t9 $t1 	# Ultima posicion duplicada para realizar el contador al reves
+	
+Decimal2:
+	li $t3 1               # t3 = 1
+	lb $t2 num_Binario($t9)# t2 sera vector(t9)
+	li $t4 0x2B            # t4 = (+)
+	sb $t4 signo($s2)      # guardar (+) en signo
+	beq $t2 0x30 Cero2     # t2 = 0
+	beq $t2 0x31 Uno2      # t2 = 1
+
+Uno2:	li $t0 1               # t0 = 1
+	b Sumar_Decimal2
+			
+Cero2:	li $t0 0               # t0 = 0
+	b Sumar_Decimal2
+	
+Sumar_Decimal2:
+	mul $t3 $t3 $s0        # t3 = t3 * 2
+	addi $t9 $t9 -1        # t9 sera el contador disminuyendo para recorrer el Binario
+	lb $t2 num_Binario($t9)# cargo en t2 el vector(t9)
+	beq $t2 0x00 Resultado # t2 = null
+	beq $t2 0x31 irSumando2# t2 = 1
+	beq $t2 0x30 NoHacerlo2# t2 = 0
+	
+irSumando2: add $t0 $t0 $t3    #  t0 = ( 1 o 0) + t3 -> t0 = t0 + t3
+	b Sumar_Decimal2
+
+NoHacerlo2:b Sumar_Decimal2
+
+Resultado:
+	print_S(Mensaje4)
+	print_S(signo)
+	print_I($t0)
+	move $t1 $t0	#numero convertido a decimal
+	lb $t2 signo($s2) #signo en hex
+	b menu2
+		
+DecimalEmpaquetado: ##########################################
+#Base10: li $v0 5
+#	syscall
+#	move $t0 $v0
+#	print_I($t0)
+#Octal:
+#hexadecimal:
+
+menu2:
+	print_S(Mensaje3)	
+	li $v0 5
+	syscall
+	
+	beq $v0 1 Bin
+#	beq 2, $v0 Dec
+#	beq $v0 3 Bas
+#	beq 4, $v0 Oct
+#	beq 5, $v0 Hex
+#	blt $v0 1 menu
+#	bgt $v0 5 menu
+	li $v0 10
+	syscall
+	
+
+#	move $t1 $t0	#numero convertido a decimal
+#	lb $t2 signo($s2) #signo en hex
+
+Bin:	# $t1 tengo mi decimal
+	li $t2 31 #se guardara el shift hacia la derecha
+	li $t3 0 # isolando cada bit
+	li $t4 0
+	li $t5 0
+	li $t6 31
+base10aA2:bltz $t2 listo
+	srlv $t3 $t1 $t2
+	and $t3 $t3 0x1
+	addi $t2 $t2 -1
+	sb $t3 num_BinarioA1($t4)
+	addi $t4 $t4 1
+	b base10aA2
+	
+listo:	bgt $t5 31 YA
+	lb $t3 num_BinarioA1($t5)
+	print_I($t3)
+	addi $t5 $t5 1
+	b listo
+	
+YA:     li $v0 10
+	syscall
+
