@@ -17,6 +17,7 @@ Mensaje4:.asciiz "\n Numero en base 10 introducido: "
 SOS: .asciiz "Pase por aqui \n"
 
 numeroCadena:.space 32
+numeroEmpaquetado: .space 8
 signo: .space 2
 
 .text
@@ -38,7 +39,7 @@ li $v0, 5
 syscall
 
 beq $v0,1 Binario_a2
-#beq 2, $v0 Decimal
+beq $v0,2 DecimalEmpaquetado
 #beq $v0 3 Base10
 #beq 4, $v0 Octal
 #beq 5, $v0 Hexadecimal
@@ -57,29 +58,86 @@ Binario_a2:#############################################################
 	li $a1 33
 	syscall
 
-GuardarBits:
-	#print_S(numeroCadena)
-	li $t2 0
-	li $t9 32
-	lb $t1 numeroCadena($t0) 	# cargo el valor ascii de 0 o 1
-	beq $t1 0xA finGuardarBits 	# $t1 = null finalizar
-	beq $t1 0x0 finGuardarBits 
-	subi $t2 $t1 0x30 
-	addi $t0 $t0 1			# $t0 contador + 1
-	sub $t9 $t9 $t0        	# $t2 cargo el valor 0001 o 0000
-	sllv $t2 $t2 $t9			# $t3 se mueve una posicion a la izq.4
-	or $t3 $t3 $t2
-	b GuardarBits
+	GuardarBits:
+		#print_S(numeroCadena)
+		li $t2 0
+		li $t9 32
+		lb $t1 numeroCadena($t0) 	# cargo el valor ascii de 0 o 1
+		beq $t1 0xA finGuardarBits 	# $t1 = null finalizar
+		beq $t1 0x0 finGuardarBits 
+		subi $t2 $t1 0x30 
+		addi $t0 $t0 1			# $t0 contador + 1
+		sub $t9 $t9 $t0        	# $t2 cargo el valor 0001 o 0000
+		sllv $t2 $t2 $t9			# $t3 se mueve una posicion a la izq.4
+		or $t3 $t3 $t2
+		b GuardarBits
+	
+	finGuardarBits:
+		print_S(Mensaje4)
+		print_I($t3)
+		b menu2
+		
+DecimalEmpaquetado:
+	li $v0 8
+	la $a0 numeroCadena
+	li $a1 9
+	syscall
 
+	GuardarEmpaquetado:
+		#print_S(numeroCadena)
+		li $t2 0
+		li $t9 8
+		lb $t1 numeroCadena($t0) 	# cargo el valor ascii de 0 o 1
+		beq $t1 0xA finGuardarBits 	# $t1 = null finalizar
+		beq $t1 0x0 finGuardarBits 
+		subi $t2 $t1 0x30 
+		addi $t0 $t0 1			# $t0 contador + 1
+		sub $t9 $t9 $t0        	# $t2 cargo el valor 0001 o 0000
+		sllv $t2 $t2 $t9			# $t3 se mueve una posicion a la izq.4
+		or $t3 $t3 $t2
+		print_I($t3)
+		print_S(SOS)
+		b GuardarBits
+		
 
-finGuardarBits:
-	print_S(Mensaje4)
-	print_I($t3)
+	
+	finGuardarEmpaquetado:
+		print_S(Mensaje4)
+		print_I($t3)
+		b menu2
+
+#Base10
+#Octal
+#Hexadecimal	
+
+menu2:	
+	li $t0 0
+	move $t0 $t3
+	print_S(Mensaje3)	
+	li $v0 5
+	syscall
+	
+	beq $v0 1 BinA2
+#	beq 2, $v0 DecEmp
+#	beq $v0 3 Bas10
+#	beq 4, $v0 Oct
+#	beq 5, $v0 Hex
+#	blt $v0 1 menu2
+#	bgt $v0 5 menu2
+	li $v0 10
+	syscall
+
+BinA2: ############################
+	li $v0 35
+	move $a0 $t0
+	syscall
 	li $v0 10
 	syscall
 	
-	
-	
+#DecEmp:
+#Bas10:
+#Oct:
+#Hex:
 	
 	
 	
