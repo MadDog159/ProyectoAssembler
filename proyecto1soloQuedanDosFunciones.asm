@@ -19,6 +19,7 @@ SOS: .asciiz "Pase por aqui \n"
 numeroCadena:.space 32
 numeroEmpaquetado: .space 32
 numeroHexadecimal: .space 8
+numeroHexadecimalSal: .space 9
 signo: .space 2
 
 .text
@@ -329,9 +330,9 @@ menu2:	#########################################################################
 	beq $v0 2 DecEmp
 #	beq $v0 3 Bas10
 #	beq 4, $v0 Oct
-#	beq 5, $v0 Hex
-#	blt $v0 1 menu2
-#	bgt $v0 5 menu2
+	beq $v0 5 Hex
+	blt $v0 1 menu2
+	bgt $v0 5 menu2
 	li $v0 10
 	syscall
 
@@ -343,7 +344,6 @@ BinA2: #########################################################################
 	syscall
 	
 DecEmp: #############################################################################################
-	
 	li $t4,0x0c
    	bgez $t0 siga
      	abs $t0,$t0
@@ -392,12 +392,150 @@ DecEmp: ########################################################################
 
 
 
-#Oct: #########################################################################################################
+Oct: #########################################################################################################
 
 
 
 
-#Hex: ##############################################################################
+Hex: ##############################################################################
+	li $s0 0x0f
+	li $t1 28
+	li $t9 0
+
+	li $t4,0x2b
+   	bgez $t0 convertirHexadecimal
+     	mul $t0 $t0 -1
+     	#print_I($t0)
+     	li $t4,0x2d
+	
+	convertirHexadecimal:
+		bltz $t1 finconvertirHexadecimal
+		srlv $t2 $t0 $t1
+		and $t2 $t2 $s0
+		beq $t1 28 guardarSigno
+		beq $t2 0 guardar0Hex
+		beq $t2 1 guardar1
+		beq $t2 2 guardar2
+		beq $t2 3 guardar3
+		beq $t2 4 guardar4
+		beq $t2 5 guardar5
+		beq $t2 6 guardar6
+		beq $t2 7 guardar7
+		beq $t2 8 guardar8
+		beq $t2 9 guardar9
+		beq $t2 10 guardar10
+		beq $t2 11 guardar11
+		beq $t2 12 guardar11
+		beq $t2 13 guardar13
+		beq $t2 14 guardar14
+		beq $t2 15 guardar15
+		
+	guardar0Hex:
+       		li $t7 0x30
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar1:
+       		li $t7 0x31
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar2:
+       		li $t7 0x32
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar3:
+       		li $t7 0x33
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar4:
+       		li $t7 0x34
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar5:
+       		li $t7 0x35
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar6:
+       		li $t7 0x36
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar7:
+       		li $t7 0x37
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar8:
+       		li $t7 0x38
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar9:
+       		li $t7 0x39
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar10:
+       		li $t7 0x41
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar11:
+       		li $t7 0x42
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar12:
+       		li $t7 0x43
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar13:
+       		li $t7 0x44
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar14:
+       		li $t7 0x45
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardar15:
+       		li $t7 0x46
+       		sb $t7 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+       	guardarSigno:
+       		sb $t4 numeroHexadecimalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -4
+       		b convertirHexadecimal
+		
+	finconvertirHexadecimal:
+		print_S(numeroHexadecimalSal)
+		li $v0 10
+		syscall
 	
 	
 	
