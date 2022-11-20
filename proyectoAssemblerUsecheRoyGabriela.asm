@@ -11,7 +11,7 @@
 
 .data
 Mensaje1:.asciiz "Bienvenido a la Calculadora de Programador\n"
-Mensaje2:.asciiz "Elija el sistema numerico que introducira: \n 1)Binario \n 2)Decimal Empaquetado\n 3)Base 10 \n 4)Octal \n 5)Hexadecimal\n"
+Mensaje2:.asciiz "Elija el sistema numerico que introducira: \n 1)Binario 		(introducir los 32 bits) \n 2)Decimal Empaquetado 	(introducir el signo + los 8 digitos)\n 3)Base 10 		(introducir el signo + maximo los 8 digitos)\n 4)Octal 		(intruducir el signo + (sin los ceros) los digitos ej: +17) \n 5)Hexadecimal 		(introudcir el signo + los ceros y sus digitos ej: +0000000F)\n"
 Mensaje3:.asciiz "\n El sistema de numeracion al cual convertir: \n 1)Binario \n 2)Decimal Empaquetado\n 3)Base 10 \n 4)Octal \n 5)Hexadecimal\n"
 Mensaje4:.asciiz "\n Numero en base 10 introducido: "
 SOS: .asciiz "Pase por aqui \n"
