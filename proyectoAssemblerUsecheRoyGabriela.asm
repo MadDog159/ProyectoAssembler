@@ -19,7 +19,7 @@ SOS: .asciiz "Pase por aqui \n"
 numeroCadena:.space 32
 numeroComplementoA2: .space 32
 numeroEmpaquetado: .space 32
-numeroHexadecimal: .space 8
+numeroHexadecimal: .space 9
 numeroHexadecimalSal: .space 9
 numeroOctalSal: .space 12
 signo: .space 2
@@ -284,11 +284,11 @@ Octal:   #######################################################################
 Hexadecimal:	#########################################################################################
 	li $v0 8
 	la $a0 numeroHexadecimal
-	li $a1 9
+	li $a1 10
 	syscall
 	li $s6 16	# constante 16
 	li $t6 1
-	li $t0 8 	# contador de posisicones
+	li $t0 9 	# contador de posisicones
 	li $t3 1
 	li $t5 0
 	
@@ -355,7 +355,7 @@ BinA2: #########################################################################
         	beq $t2 0 guardar0A2		# $t2 = 0 guardamos 0 en el vector
 		beq $t2 1 guardar1A2		# $t2 = 1 guardamos 1 en el vector
 	guardar0A2:
-               li $t7 0x30`			# ascii 0
+               li $t7 0x30		
                sb $t7 numeroComplementoA2($t8)	# guardamos el caracter en el vetor
                addi $t8 $t8 1			# sumo 1 al contador de posiciones
                addi $t9 $t9 -1			# resto 1 al movimiento del shift
