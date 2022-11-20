@@ -17,9 +17,11 @@ Mensaje4:.asciiz "\n Numero en base 10 introducido: "
 SOS: .asciiz "Pase por aqui \n"
 
 numeroCadena:.space 32
+numeroComplementoA2: .space 32
 numeroEmpaquetado: .space 32
 numeroHexadecimal: .space 8
 numeroHexadecimalSal: .space 9
+numeroOctalSal: .space 12
 signo: .space 2
 
 .text
@@ -127,7 +129,6 @@ DecimalEmpaquetado: ############################################################
 		b GuardarEmpaquetado
 	negativo:
 		li $t5 -1
-		#sb $t5 numeroDecimal($t7)
 		b GuardarEmpaquetado
 		
 	finGuardarEmpaquetado:
@@ -275,8 +276,8 @@ Octal:   #######################################################################
 		mulo $t0 $t0 -1
 
 	finsignooctal:
-		print_S(Mensaje4)
-		print_I($t0)
+		#print_S(Mensaje4)
+		#print_I($t0)
 		b menu2
 
 
@@ -285,38 +286,38 @@ Hexadecimal:	###################################################################
 	la $a0 numeroHexadecimal
 	li $a1 9
 	syscall
-	li $s6 16
+	li $s6 16	# constante 16
 	li $t6 1
-	li $t0 8
+	li $t0 8 	# contador de posisicones
 	li $t3 1
 	li $t5 0
 	
 	GuardarHex:#print_S(numeroCadena)
 		li $t2 0
-		addi $t0 $t0 -1			# $t0 contador + 1
-		bltz $t0 finGuardarHex
+		addi $t0 $t0 -1			# $t0 contador - 1 para recorrer el vector hacia la izquierda
+		bltz $t0 finGuardarHex		# si es menor a 0 qesta listo para imprimir
 		lb $t1 numeroHexadecimal($t0) 	# cargo el valor ascii de 0 o 1			
-		beq $t1 0x2d negativoHex
-		beq $t1 0x2b finGuardarHex
+		beq $t1 0x2d negativoHex	# si = caracter "-" ir a cambiarlo
+		beq $t1 0x2b finGuardarHex 	# si = caracter "+" listo
 		subi $t2 $t1 0x30 		# $t2 con el bit especifico del caracter
-		bgt $t2 9 restaHex
+		bgt $t2 9 restaHex		# si $t2 es mayor a 9 se va a sigamo
 	sigamo:	
-		mul $t4 $t3 $t2
-		add $t5 $t5 $t4
-		mul $t3 $t3 $s6			#guardo en memoria cada uno de los bits
+		mul $t4 $t3 $t2		# en $t4 = (16^n)* bit obtenido
+		add $t5 $t5 $t4		# en $t5 = $t5 * ( el bit multiplicado * 16^n)
+		mul $t3 $t3 $s6		# $t3 = 16^n donde t3 = 16 y 16 constante
 		b GuardarHex
 	restaHex:
-		addi $t2 $t2 -7
+		addi $t2 $t2 -7		# se resta -7 al bit para conseguir el numero que representa la letra en hexadecimal
 		b sigamo
 	
 	negativoHex:
 		li $t6 -1
-		mul $t5 $t5 $t6
+		mul $t5 $t5 $t6		# se mulplica el resultado final por -1 si era negativo
 		b finGuardarHex
 		
 	finGuardarHex:
-		print_S(Mensaje4)
-		print_I($t5)
+		#print_S(Mensaje4)
+		#print_I($t5)
 		li $t0 0
 		move $t0 $t5
 		b menu2
@@ -326,10 +327,17 @@ menu2:	#########################################################################
 	li $v0 5
 	syscall
 	
+	# El usurio elijira entre adonde desea convertir:
+	# 1) Binario
+	# 2) Decimal empaquetada
+	# 3) Base 10
+	# 4) Octal
+	# 5) Hexadecimal
+	
 	beq $v0 1 BinA2
 	beq $v0 2 DecEmp
-#	beq $v0 3 Bas10
-#	beq 4, $v0 Oct
+	beq $v0 3 Bas10
+	beq $v0 4 Oct
 	beq $v0 5 Hex
 	blt $v0 1 menu2
 	bgt $v0 5 menu2
@@ -337,84 +345,194 @@ menu2:	#########################################################################
 	syscall
 
 BinA2: #############################################################################################
-	li $v0 35
-	move $a0 $t0
-	syscall
-	li $v0 10
-	syscall
-	
+	li $t9 31 # movimiento del shift
+	li $t8 0  # contador de posiciones
+
+    	convertirComplementoA2:
+        	bltz $t9 imprimirComplementoA2 # si $t9 es menor a 0 ya recorrio el vector
+        	srlv $t2 $t0 $t9		# $t2 = mover hacia la derecha los bits la cantidad del iterador
+        	and $t2 $t2 0x01 		# $t2 isolamos el bit
+        	beq $t2 0 guardar0A2		# $t2 = 0 guardamos 0 en el vector
+		beq $t2 1 guardar1A2		# $t2 = 1 guardamos 1 en el vector
+	guardar0A2:
+               li $t7 0x30`			# ascii 0
+               sb $t7 numeroComplementoA2($t8)	# guardamos el caracter en el vetor
+               addi $t8 $t8 1			# sumo 1 al contador de posiciones
+               addi $t9 $t9 -1			# resto 1 al movimiento del shift
+               b convertirComplementoA2
+   	guardar1A2:
+               li $t7 0x31
+               sb $t7 numeroComplementoA2($t8)
+               addi $t8 $t8 1			#   //
+               addi $t9 $t9 -1
+               b convertirComplementoA2
+               
+      	imprimirComplementoA2:
+               print_S(numeroComplementoA2)
+               li $v0 10
+               syscall
+
 DecEmp: #############################################################################################
-	li $t4,0x0c
-   	bgez $t0 siga
-     	abs $t0,$t0
-     	li $t4,0x0d
+	li $t4,0x0c	# ascii +
+   	bgez $t0 siga	# el valor es positivo
+     	abs $t0,$t0	# convierto el valor a positivo
+     	li $t4,0x0d	# guardo ascii -
 	siga:  
 		li $t5,0 	#registro donde quedarán 7 decimales + el signo
       		li $t1,0 	#contador de iteraciones, debe llegar hasta 7
-       		li $t2,0 	# desplazamiento variable del shift left logical )se incrementa de 4 en 4=
-       		li $t9 31
+       		li $t2,0 	# desplazamiento variable del shift left logical se incrementa de 4 en 4
+       		li $t9 31	# // pero 1 en 1
        		li $t8 0       # contador de caracter
 	registroEmpaquetado: 
-		div $t0,$t0,10
-       		mfhi $t3 	# residuo de la división va a $t3
-      		sllv $t3,$t3,$t2
- 		or $t5,$t5,$t3
- 		addi $t1,$t1,1
- 		addi $t2,$t2,4
-       		blt  $t1,7,registroEmpaquetado
-       		sll $t5,$t5,4
-       		or $t5,$t5,$t4
+		div $t0,$t0,10			# division del resultado en 10 y guardo el cociente asi mismo
+       		mfhi $t3 			# residuo de la división va a $t3
+      		sllv $t3,$t3,$t2		# desplazo el valor del residuo al final de la memoria
+ 		or $t5,$t5,$t3			# lo guardo en otro posicion de memoria
+ 		addi $t1,$t1,1			# aumento en 1 la iteracion para el vector con hexadecimal
+ 		addi $t2,$t2,4			# aumento en 4 el desplazamiento del shift
+       		blt  $t1,7,registroEmpaquetado	# mientras contador t1 sea menor que 0 continuo en el loop
+       		sll $t5,$t5,4			# muevo 4 posiciones el registro
+       		or $t5,$t5,$t4			# guardo el valor del signo del empaquetado a su derecha
        		b imprimir
        	imprimir:
-       		bltz $t9 listo
-       		srlv $t6 $t5 $t9
-       		and $t6 $t6 0x1
-       		bnez $t6 guardar
-       		b guardar0
+       		bltz $t9 listo			# si es menor que 0 ya esta listo para imprimir
+       		srlv $t6 $t5 $t9		# desplazo el registro 1 a 1 a la derecha
+       		and $t6 $t6 0x1			# isolo cada bit del registro
+       		bnez $t6 guardar		# si el bit es = 1 guardo su valor
+       		b guardar0			# si el bit es - 0 guardo su valor
        	
        	guardar0:
-       		li $t7 0x30
-       		sb $t7 numeroEmpaquetado($t8)
-       		addi $t8 $t8 1
-       		addi $t9 $t9 -1
+       		li $t7 0x30			# ascii 0
+       		sb $t7 numeroEmpaquetado($t8)	# guardamos el caracter en el vetor
+       		addi $t8 $t8 1			# sumo 1 al contador de posiciones
+       		addi $t9 $t9 -1			# resto 1 al movimiento del shift
        		b imprimir
        	guardar:
        		li $t7 0x31
-       		sb $t7 numeroEmpaquetado($t8)
+       		sb $t7 numeroEmpaquetado($t8)	# //
        		addi $t8 $t8 1
        		addi $t9 $t9 -1
        		b imprimir
        	listo:
        		print_S(numeroEmpaquetado)
        		
-#Bas10:########################################################################################################
-	
+Bas10:########################################################################################################
+	move $s0 $t0
+	blez $s0 finprintpos
+	printpos:
+		li $v0 11		# solo se agrega el "+" como caracter al valor del registro
+		li $a0 '+'
+		syscall
+
+	finprintpos:
+		print_I($s0)
+		li $v0 10
+		syscall
 
 
 
 Oct: #########################################################################################################
+	li $s0 0x7	# ascii ...0111 (mascara)
+	li $t1 32	# desplazamiento del shift
+	li $t9 0	# contador de posiciones del vector
 
+	li $t4,0x2b		# ascii +
+   	bgez $t0 convertirOctal# el valor es positivo
+     	mul $t0 $t0 -1		# convierto el valor a positivo
+     	li $t4,0x2d		# guardo ascii -
+	
+	convertirOctal:
+		bltz $t1 finConvertirOctal	# si el desplazamiento del shift es menor a 0 esta listo
+		srlv $t2 $t0 $t1		# desplazamiento del resultado 
+		and $t2 $t2 $s0			# isolar los bits de 3 en 3 para obtener el digito
+		beq $t1 32 guardarSignoOctal	# guardar el signo del numero
+		beq $t2 0 guardar0oct		
+		beq $t2 1 guardar1oct		# ir a guardar el caracter especifico en el vector
+		beq $t2 2 guardar2oct
+		beq $t2 3 guardar3oct
+		beq $t2 4 guardar4oct
+		beq $t2 5 guardar5oct
+		beq $t2 6 guardar6oct
+		beq $t2 7 guardar7oct
+		
+	guardar0oct:				
+       		li $t7 0x30			# ascii 0
+       		sb $t7 numeroOctalSal($t9)	# guardamos el caracter en el vetor
+       		addi $t9 $t9 1			# sumo 1 a lcontador de posiciones
+       		addi $t1 $t1 -3			# resto 3 a 3 movimiento del shift
+       		b convertirOctal
+       	guardar1oct:
+       		li $t7 0x31
+       		sb $t7 numeroOctalSal($t9)	# //
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -3
+       		b convertirOctal
+       	guardar2oct:
+       		li $t7 0x32
+       		sb $t7 numeroOctalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -3
+       		b convertirOctal
+       	guardar3oct:
+       		li $t7 0x33
+       		sb $t7 numeroOctalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -3
+       		b convertirOctal
+       	guardar4oct:
+       		li $t7 0x34
+       		sb $t7 numeroOctalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -3
+       		b convertirOctal
+       	guardar5oct:
+       		li $t7 0x35
+       		sb $t7 numeroOctalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -3
+       		b convertirOctal
+       	guardar6oct:
+       		li $t7 0x36
+       		sb $t7 numeroOctalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -3
+       		b convertirOctal
+       	guardar7oct:
+       		li $t7 0x37
+       		sb $t7 numeroOctalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -3
+       		b convertirOctal
+       	guardarSignoOctal:
+       		sb $t4 numeroOctalSal($t9)
+       		addi $t9 $t9 1
+       		addi $t1 $t1 -2
+       		b convertirOctal
+		
+	finConvertirOctal:
+		print_S(numeroOctalSal)
+		li $v0 10
+		syscall
 
 
 
 Hex: ##############################################################################
-	li $s0 0x0f
-	li $t1 28
-	li $t9 0
+	li $s0 0x0f	# ascii ...1111 (mascara)
+	li $t1 32	# desplazamiento del shift
+	li $t9 0	# contador de posiciones del vector
 
-	li $t4,0x2b
-   	bgez $t0 convertirHexadecimal
-     	mul $t0 $t0 -1
-     	#print_I($t0)
-     	li $t4,0x2d
+	li $t4,0x2b			# ascii +
+   	bgez $t0 convertirHexadecimal	# el valor es positivo
+     	mul $t0 $t0 -1			# convierto el valor a positivo
+     	li $t4,0x2d			# guardo ascii -
 	
 	convertirHexadecimal:
-		bltz $t1 finconvertirHexadecimal
-		srlv $t2 $t0 $t1
-		and $t2 $t2 $s0
-		beq $t1 28 guardarSigno
+		bltz $t1 finconvertirHexadecimal	# si el desplazamiento del shift es menor a 0 esta listo
+		srlv $t2 $t0 $t1			# desplazamiento del resultado 
+		and $t2 $t2 $s0				# isolar los bits de 4 en 4 para obtener el digito
+		beq $t1 32 guardarSigno			# guardar el signo del numero
 		beq $t2 0 guardar0Hex
-		beq $t2 1 guardar1
+		beq $t2 1 guardar1			# ir a guardar el caracter especifico en el vector
 		beq $t2 2 guardar2
 		beq $t2 3 guardar3
 		beq $t2 4 guardar4
@@ -431,14 +549,14 @@ Hex: ###########################################################################
 		beq $t2 15 guardar15
 		
 	guardar0Hex:
-       		li $t7 0x30
-       		sb $t7 numeroHexadecimalSal($t9)
-       		addi $t9 $t9 1
-       		addi $t1 $t1 -4
+       		li $t7 0x30				# ascii 0
+       		sb $t7 numeroHexadecimalSal($t9)	# guardamos el caracter en el vetor
+       		addi $t9 $t9 1				# sumo 1 a lcontador de posiciones
+       		addi $t1 $t1 -4				# resto 4 a 4 movimiento del shift
        		b convertirHexadecimal
        	guardar1:
        		li $t7 0x31
-       		sb $t7 numeroHexadecimalSal($t9)
+       		sb $t7 numeroHexadecimalSal($t9)	# //
        		addi $t9 $t9 1
        		addi $t1 $t1 -4
        		b convertirHexadecimal
